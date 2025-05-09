@@ -3,36 +3,54 @@ import google.generativeai as genai
 from PIL import Image
 import os
 
-# Set your Gemini API key (can be read from secrets or environment for safety)
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# Load API key from input or environment/secrets
+api_key = GEMINI_API_KEY
+genai.configure(api_key=api_key)
 
-# Load the multimodal Gemini model
-model = genai.GenerativeModel("gemini-1.5-flash")
+# Set up page
+st.set_page_config(page_title="Gemini Chatbot", layout="wide")
+st.title("💬 Gemini Chatbot (ChatGPT Style)")
 
-st.set_page_config(page_title="Gemini Chat", layout="centered")
-st.title("🧠 Gemini-Powered Chatbot (Text + Image)")
+# Set up model and chat
+if "chat" not in st.session_state:
+    model = genai.GenerativeModel("gemini-pro-vision")
+    st.session_state.chat = model.start_chat(history=[])
 
-# Session state to store conversation
-if "history" not in st.session_state:
-    st.session_state.history = []
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-uploaded_image = st.file_uploader("Upload an image (optional)", type=["png", "jpg", "jpeg"])
-user_input = st.text_input("Ask something...", key="prompt")
+# Display existing chat history
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-if st.button("Send") and user_input:
-    st.session_state.history.append({"role": "user", "content": user_input})
-    
+# Optional image upload
+uploaded_image = st.file_uploader("Upload an image (optional)", type=["jpg", "jpeg", "png"])
+
+# Input box at bottom
+prompt = st.chat_input("Ask something...")
+
+# When user sends a message
+if prompt:
+    # Show user message
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Send to Gemini
     try:
         if uploaded_image:
             image = Image.open(uploaded_image)
-            response = model.generate_content([user_input, image])
+            response = st.session_state.chat.send_message([prompt, image])
         else:
-            response = model.generate_content(user_input)
-        
-        st.session_state.history.append({"role": "assistant", "content": response.text})
-    except Exception as e:
-        st.error(f"Error: {e}")
+            response = st.session_state.chat.send_message(prompt)
 
-# Display the conversation history
-for msg in st.session_state.history:
-    st.markdown(f"**{msg['role'].capitalize()}:** {msg['content']}")
+        reply = response.text
+
+        # Show assistant message
+        with st.chat_message("assistant"):
+            st.markdown(reply)
+        st.session_state.messages.append({"role": "assistant", "content": reply})
+
+    except Exception as e:
+        st.error(f"❌ Gemini Error: {e}")
