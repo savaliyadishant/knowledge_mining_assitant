@@ -3,9 +3,7 @@ import google.generativeai as genai
 from PIL import Image
 import os
 
-# Load API key from input or environment/secrets
-api_key = GEMINI_API_KEY
-genai.configure(api_key=api_key)
+genai.configure(GEMINI_API_KEY)
 
 # Set up page
 st.set_page_config(page_title="Gemini Chatbot", layout="wide")
@@ -13,7 +11,7 @@ st.title("💬 Gemini Chatbot (ChatGPT Style)")
 
 # Set up model and chat
 if "chat" not in st.session_state:
-    model = genai.GenerativeModel("gemini-pro-vision")
+    model = genai.GenerativeModel("gemini-1.5-flash")
     st.session_state.chat = model.start_chat(history=[])
 
 if "messages" not in st.session_state:
