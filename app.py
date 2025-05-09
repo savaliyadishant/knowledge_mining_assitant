@@ -3,7 +3,7 @@ import google.generativeai as genai
 from PIL import Image
 import os
 
-genai.configure(GEMINI_API_KEY)
+genai.configure(api_key=st.secrets.get("GEMINI_API_KEY"))
 
 # Set up page
 st.set_page_config(page_title="Gemini Chatbot", layout="wide")
